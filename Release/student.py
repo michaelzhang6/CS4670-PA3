@@ -38,17 +38,17 @@ class AnimalBaselineNet(nn.Module):
         # TODO: Define forward pass
         # TODO-BLOCK-BEGIN
         x = self.relu(self.conv1(x))
-        print(x.shape)
+        # print(x.shape)
         x = self.relu(self.conv2(x))
-        print(x.shape)
+        # print(x.shape)
         x = self.relu(self.conv3(x))
-        print(x.shape)
+        # print(x.shape)
         x = x.view(batch_size, 1536)
-        print(x.shape)
+        # print(x.shape)
         x = self.relu(self.fc(x))
-        print(x.shape)
+        # print(x.shape)
         x = self.cls(x)
-        print(x.shape)
+        # print(x.shape)
         # TODO-BLOCK-END
         return x
 
