@@ -26,14 +26,14 @@ class AnimalBaselineNet(nn.Module):
         self.conv1 = nn.Conv2d(3, 6, 3, 2, 1)
         self.conv2 = nn.Conv2d(6, 12, 3, 2, 1)
         self.conv3 = nn.Conv2d(12, 24, 3, 2, 1)
-        self.fc = nn.Linear(24, 128)
+        self.fc = nn.Linear(1536, 128)
         self.cls = nn.Linear(128, 16)
         self.relu = nn.ReLU()
         # TODO-BLOCK-END
 
     def forward(self, x):
+        batch_size = x.size(0)
         x = x.contiguous().view(-1, 3, 64, 64).float()
-        print("adfdasdfad")
 
         # TODO: Define forward pass
         # TODO-BLOCK-BEGIN
@@ -43,10 +43,12 @@ class AnimalBaselineNet(nn.Module):
         print(x.shape)
         x = self.relu(self.conv3(x))
         print(x.shape)
-        # x = x.reshape(24)  # how to reshape??
+        x = x.view(batch_size, 1536)
+        print(x.shape)
         x = self.relu(self.fc(x))
-
+        print(x.shape)
         x = self.cls(x)
+        print(x.shape)
         # TODO-BLOCK-END
         return x
 
@@ -76,12 +78,18 @@ def model_train(net, inputs, labels, criterion, optimizer):
     """
     # TODO: Foward pass
     # TODO-BLOCK-BEGIN
-
+    predictions = net(inputs)
+    predicted_labels = torch.argmax(predictions, dim=1)
+    total_images = labels.size(0)
+    num_correct = torch.eq(predicted_labels, labels.view(-1)).sum().item()
     # TODO-BLOCK-END
 
     # TODO: Backward pass
     # TODO-BLOCK-BEGIN
-
+    optimizer.zero_grad()
+    running_loss = criterion(predictions, labels.view(-1))
+    running_loss.backward()
+    optimizer.step()
     # TODO-BLOCK-END
 
     return running_loss, num_correct, total_images
