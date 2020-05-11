@@ -127,6 +127,11 @@ class Shift(object):
         _, H, W = image.shape
         # TODO: Shift image
         # TODO-BLOCK-BEGIN
+        image = image.transpose(1, 2, 0)
+        x = random.randint(-self.max_shift, self.max_shift)
+        y = random.randint(-self.max_shift, self.max_shift)
+        M = np.float32([[1, 0, x], [0, 1, y]])
+        image = cv2.warpAffine(image, M, (W, H)).transpose(2, 0, 1)
 
         # TODO-BLOCK-END
 
@@ -169,6 +174,16 @@ class Contrast(object):
 
         # TODO: Change image contrast
         # TODO-BLOCK-BEGIN
+        alpha = random.uniform(self.min_contrast, self.max_contrast)
+        for channel in range(3):
+            mean = np.mean(image[channel])
+            image[channel] = alpha * image[channel] + (1-alpha) * mean
+            for row in range(H):
+                for col in range(W):
+                    if image[channel][row][col] > 1:
+                        image[channel][row][col] = 1
+                    if image[channel][row][col] < 0:
+                        image[channel][row][col] = 0
 
         # TODO-BLOCK-END
 
@@ -207,7 +222,10 @@ class Rotate(object):
 
         # TODO: Rotate image
         # TODO-BLOCK-BEGIN
-
+        angle = random.randrange(-self.max_angle, self.max_angle)
+        image = image.transpose(1, 2, 0)
+        M = cv2.getRotationMatrix2D((W//2, H//2), angle, 1)
+        image = cv2.warpAffine(image, M, (W, H)).transpose(2, 0, 1)
         # TODO-BLOCK-END
 
         return torch.Tensor(image)
@@ -242,7 +260,9 @@ class HorizontalFlip(object):
 
         # TODO: Flip image
         # TODO-BLOCK-BEGIN
-
+        if random.random() < self.p:
+            image = image.transpose(1, 2, 0)
+            image = cv2.flip(image, 1).transpose(2, 0, 1)
         # TODO-BLOCK-END
 
         return torch.Tensor(image)
