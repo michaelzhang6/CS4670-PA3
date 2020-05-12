@@ -10,6 +10,7 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 from torchvision import transforms, datasets
+from torchsummary import summary
 
 # END IMPORTS
 
@@ -81,6 +82,7 @@ def model_train(net, inputs, labels, criterion, optimizer):
     predictions = net(inputs)
     predicted_labels = torch.argmax(predictions, dim=1)
     total_images = labels.size(0)
+    # print(predicted_labels.shape, labels.shape)
     num_correct = torch.eq(predicted_labels, labels.view(-1)).sum().item()
     # TODO-BLOCK-END
 
@@ -286,18 +288,22 @@ def get_student_settings(net):
     # TODO: Create data transform pipeline for your model
     # transforms.ToPILImage() must be first, followed by transforms.ToTensor()
     # TODO-BLOCK-BEGIN
-
+    # transform = transforms.Compose([transforms.ToPILImage(), transforms.ToTensor(), transforms.RandomApply([Shift(), Contrast(), Rotate(), HorizontalFlip()]),])
+    transform = transforms.Compose([transforms.ToPILImage(), transforms.ToTensor(),])
     # TODO-BLOCK-END
 
     # TODO: Settings for dataloader and training. These settings
     # will be useful for training your model.
     # TODO-BLOCK-BEGIN
-
+    batch_size = 128
     # TODO-BLOCK-END
 
     # TODO: epochs, criterion and optimizer
     # TODO-BLOCK-BEGIN
-
+    epochs = 4
+    criterion = nn.CrossEntropyLoss()
+    # optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
+    optimizer = optim.Adam(net.parameters(), lr = 3e-4)
     # TODO-BLOCK-END
 
     return transform, batch_size, epochs, criterion, optimizer
@@ -308,7 +314,31 @@ class AnimalStudentNet(nn.Module):
         super(AnimalStudentNet, self).__init__()
         # TODO: Define layers of model architecture
         # TODO-BLOCK-BEGIN
-
+        ifc = 3
+        fc = 64
+        self.conv2D_0 = nn.Conv2d(ifc, fc, (3, 3), 1, 1)
+        self.conv2D_1 = nn.Conv2d(fc, fc, (3, 3), 1, 1)
+        self.conv2D_2 = nn.Conv2d(fc, fc, (3, 3), 1, 1)
+        self.conv2D_3 = nn.Conv2d(fc, fc, (3, 3), 1, 1)
+        self.conv2D_4 = nn.Conv2d(fc, fc, (3, 3), 1, 1)
+        self.conv2D_5 = nn.Conv2d(fc, fc, (3, 3), 1, 1)
+        self.conv2D_6 = nn.Conv2d(fc, fc, (3, 3), 1, 1)
+        # self.conv2D_7 = nn.Conv2d(128, 128, (3, 3), 1, 1)
+        # self.conv2D_8 = nn.Conv2d(128, 128, (3, 3), 1, 1)
+        # self.conv2D_9 = nn.Conv2d(128, 128, (3, 3), 1, 1)
+        # self.conv2D_10 = nn.Conv2d(128, 128, (3, 3), 1, 1)
+        # self.conv2D_11 = nn.Conv2d(128, 128, (3, 3), 1, 1)
+        self.fc_1 = nn.Linear(fc, fc // 2)
+        self.fc_2 = nn.Linear(fc // 2, num_classes)
+        self.bn_1 = nn.BatchNorm2d(fc)
+        self.bn_2 = nn.BatchNorm2d(fc)
+        self.bn_3 = nn.BatchNorm2d(fc)
+        self.bn_4 = nn.BatchNorm2d(fc)
+        self.bn_5 = nn.BatchNorm2d(fc)
+        self.bn_6 = nn.BatchNorm2d(fc)
+        self.mp = nn.MaxPool2d((4, 4), 4)
+        self.relu = nn.ReLU()
+        self.sigmoid = nn.Sigmoid()
         # TODO-BLOCK-END
 
     def forward(self, x):
@@ -316,8 +346,48 @@ class AnimalStudentNet(nn.Module):
 
         # TODO: Define forward pass
         # TODO-BLOCK-BEGIN
+        x = self.relu(self.conv2D_0(x))
 
+        x = self.conv2D_2(self.relu(self.bn_1(self.conv2D_1(x)))) + x
+        x = self.mp(self.relu(self.bn_2(x)))
+
+        x = self.conv2D_4(self.relu(self.bn_3(self.conv2D_3(x)))) + x
+        x = self.mp(self.relu(self.bn_4(x)))
+
+        x = self.conv2D_6(self.relu(self.bn_5(self.conv2D_5(x)))) + x
+        x = self.mp(self.relu(self.bn_6(x)))
+        # x = self.relu(self.conv2D_1(x) + x)
+        # x = self.mp()
+        #
+        # x = self.relu(self.conv2D_2(x))
+        # x = self.relu(self.conv2D_3(x) + x)
+        # x = self.mp(self.bn_2(x))
+        #
+        # x = self.relu(self.conv2D_4(x))
+        # x = self.relu(self.conv2D_5(x) + x)
+        # x = self.mp(self.bn_3(x))
+
+        # x = self.relu(self.conv2D_6(x))
+        # x = self.relu(self.conv2D_7(x) + x)
+        # x = self.mp(self.bn_4(x))
+        #
+        # x = self.relu(self.conv2D_8(x))
+        # x = self.relu(self.conv2D_9(x) + x)
+        # x = self.mp(self.bn_5(x))
+        #
+        # x = self.relu(self.conv2D_10(x))
+        # x = self.relu(self.conv2D_11(x) + x)
+        # x = self.mp(self.bn_6(x))
+
+        (_, C, H, W) = x.size()
+        # print(x.shape)
+        x = x.view(-1, C * H * W)
+        # print(x.shape)
+        # x = x.view(-1, 128)
+        x = self.relu(self.fc_1(x))
+        x = self.sigmoid(self.fc_2(x))
         # TODO-BLOCK-END
+        # print(x.shape)
         return x
 
 #########################################################
