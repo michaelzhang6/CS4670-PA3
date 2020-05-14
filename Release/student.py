@@ -281,7 +281,8 @@ def get_student_settings(net):
     # TODO: Create data transform pipeline for your model
     # transforms.ToPILImage() must be first, followed by transforms.ToTensor()
     # TODO-BLOCK-BEGIN
-    transform = transforms.Compose([transforms.ToPILImage(), transforms.ToTensor(), transforms.RandomChoice([Shift(), Contrast(), Rotate(), HorizontalFlip()]),])
+    transform = transforms.Compose([transforms.ToPILImage(), transforms.ToTensor(
+    ), transforms.RandomChoice([Shift(), Contrast(), Rotate(), HorizontalFlip()]), ])
     # transform = transforms.Compose([transforms.ToPILImage(), transforms.ToTensor(),])
     # TODO-BLOCK-END
 
@@ -295,7 +296,7 @@ def get_student_settings(net):
     # TODO-BLOCK-BEGIN
     epochs = 4
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(net.parameters(), lr = 3e-4)
+    optimizer = optim.Adam(net.parameters(), lr=3e-4)
     # TODO-BLOCK-END
 
     return transform, batch_size, epochs, criterion, optimizer
@@ -323,6 +324,7 @@ class ResBlock(nn.Module):
             x = F.max_pool2d(x, 2, 2)
         # Cout x H/2 x W/2
         return x
+
 
 class AnimalStudentNet(nn.Module):
     def __init__(self, num_classes=16):
@@ -396,7 +398,13 @@ def get_adversarial(img, output, label, net, criterion, epsilon):
 
     # TODO: Define forward pass
     # TODO-BLOCK-BEGIN
+    loss = criterion(output, label)
+    loss.backward()
 
+    signs = torch.sign(img.grad)
+    noise = signs * epsilon
+
+    perturbed_image = torch.clamp(img + noise, 0, 1)
     # TODO-BLOCK-END
 
     return perturbed_image, noise
